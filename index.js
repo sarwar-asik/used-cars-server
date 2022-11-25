@@ -48,8 +48,17 @@ async function run() {
     });
     // get categories
 
+    app.get("/usersTypes/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await usersCollections.findOne({email});
+      const userType = user.role;
+
+      res.send(userType)
+    });
+
     app.get("/categories", async (req, res) => {
       const query = {};
+
       const categories = await categoriesCollections.find(query).toArray();
       res.send(categories);
     });
@@ -68,8 +77,7 @@ async function run() {
         const result = await productsCollections.insertOne(products);
         console.log(seller);
         res.send(result);
-      } 
-    
+      }
     });
     app.get("/products/:name", async (req, res) => {
       const name = req.params.name;
