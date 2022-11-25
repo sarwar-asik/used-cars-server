@@ -50,10 +50,10 @@ async function run() {
 
     app.get("/usersTypes/:email", async (req, res) => {
       const email = req.params.email;
-      const user = await usersCollections.findOne({email});
-      const userType = user.role;
-
-      res.send(userType)
+      const user = await usersCollections.findOne({ email });
+      const userType = user?.role;
+      // console.log(userType);
+      res.send({userType});
     });
 
     app.get("/categories", async (req, res) => {
@@ -92,6 +92,17 @@ async function run() {
       const result = await bookingsCollections.insertOne(bookings);
       res.send(result);
     });
+
+app.get('/myproducts/:email',async(req,res)=>{
+const email = req.params.email;
+  const query= {email:email}
+  const seller = await productsCollections.find(query).toArray()
+  console.log(seller);
+  res.send(seller)
+})
+
+
+
   } finally {
   }
 }
