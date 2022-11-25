@@ -29,6 +29,9 @@ async function run() {
     const categoriesCollections = client
       .db("used-cars-ass12")
       .collection("categories");
+    const bookingsCollections = client
+      .db("used-cars-ass12")
+      .collection("bookings");
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -59,18 +62,28 @@ async function run() {
 
     app.post("/products", async (req, res) => {
       const products = req.body;
-      console.log(products);
-      const result = await productsCollections.insertOne(products);
-      res.send(result)
+      // console.log(products);
+      const seller = await usersCollections.findOne({ email: req.query.email });
+      if (seller.role === "seller") {
+        const result = await productsCollections.insertOne(products);
+        console.log(seller);
+        res.send(result);
+      } 
+    
     });
-    app.get('/products/:name',async(req,res)=>{
+    app.get("/products/:name", async (req, res) => {
       const name = req.params.name;
-      const query = {category:name}
-      const result = await productsCollections.find(query).toArray()
-      res.send(result)
+      const query = { category: name };
+      const result = await productsCollections.find(query).toArray();
+      res.send(result);
+    });
 
-
-    })
+    app.post("/bookings", async (req, res) => {
+      const bookings = req.body;
+      // console.log(bookings);
+      const result = await bookingsCollections.insertOne(bookings);
+      res.send(result);
+    });
   } finally {
   }
 }
