@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const app = express();
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIP_SECRET);
@@ -72,7 +72,6 @@ async function run() {
       res.status(403).send({ accessToken: "please call with email" });
     });
 
-
     app.post("/users", async (req, res) => {
       const user = req.body;
       // console.log(user);
@@ -111,14 +110,48 @@ async function run() {
 
     app.post("/products", async (req, res) => {
       const products = req.body;
-      // console.log(products);
+      // console.log(req.query.category);
       const seller = await usersCollections.findOne({ email: req.query.email });
+      const selectedCategory = req.query.category;
+      const getCategory = await categoriesCollections.findOne({
+        name: selectedCategory,
+      });
+      // console.log(products);
+
       if (seller.role === "seller") {
         const result = await productsCollections.insertOne(products);
-        console.log(seller);
+        // console.log(products);
         res.send(result);
       }
     });
+
+    app.post("/updateCategory", async (req, res) => {
+      const selectedCategory = req.query.category;
+
+      // console.log(selectedCategory);
+
+      const getCategory = await categoriesCollections.findOne({
+        name: selectedCategory,
+      });
+      const categoryId = getCategory._id;
+
+      // console.log(getCategory._id);
+      const filter = { category: selectedCategory };
+
+      const updateDocument = {
+        $set: {
+          categoryId: categoryId,
+        },
+      };
+      // console.log(updateDocument);
+
+      const result = await productsCollections.updateOne(
+        filter,
+        updateDocument
+      );
+      res.send(result);
+    });
+
     app.get("/products/:name", async (req, res) => {
       const name = req.params.name;
       const query = { category: name };
@@ -182,9 +215,7 @@ async function run() {
         updateDoc
       );
       res.send(result);
-    })
-
-    
+    });
 
     app.get("/myproducts/:email", async (req, res) => {
       const email = req.params.email;
