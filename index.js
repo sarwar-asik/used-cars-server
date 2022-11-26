@@ -78,12 +78,19 @@ async function run() {
       const result = await usersCollections.insertOne(user);
       res.send(result);
     });
-
+// post category by admin ///
     app.post("/category", async (req, res) => {
       const category = req.body;
-      const result = await categoriesCollections.insertOne(category);
+      const email = req.query.email
+      // console.log(email);
+      const admin = await usersCollections.findOne({email:email})
+      console.log(admin);
+
+      if(admin.role === 'Admin'){
+        const result = await categoriesCollections.insertOne(category);
+        res.send(result);
+      }
       // console.log(category);
-      res.send(result);
     });
     // get categories
 
@@ -110,14 +117,10 @@ async function run() {
 
     app.post("/products", async (req, res) => {
       const products = req.body;
-      // console.log(req.query.category);
+      // console.log(req.query.email);
       const seller = await usersCollections.findOne({ email: req.query.email });
-      const selectedCategory = req.query.category;
-      const getCategory = await categoriesCollections.findOne({
-        name: selectedCategory,
-      });
-      // console.log(products);
 
+      // console.log(products);
       if (seller.role === "seller") {
         const result = await productsCollections.insertOne(products);
         // console.log(products);
@@ -125,38 +128,23 @@ async function run() {
       }
     });
 
-    app.post("/updateCategory", async (req, res) => {
-      const selectedCategory = req.query.category;
-
-      // console.log(selectedCategory);
-
-      const getCategory = await categoriesCollections.findOne({
-        name: selectedCategory,
-      });
-      const categoryId = getCategory._id;
-
-      // console.log(getCategory._id);
-      const filter = { category: selectedCategory };
-
-      const updateDocument = {
-        $set: {
-          categoryId: categoryId,
-        },
-      };
-      // console.log(updateDocument);
-
-      const result = await productsCollections.updateOne(
-        filter,
-        updateDocument
-      );
+    app.get("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { categoryId: id };
+      const result = await productsCollections.find(query).toArray();
       res.send(result);
     });
 
-    app.get("/products/:name", async (req, res) => {
-      const name = req.params.name;
-      const query = { category: name };
-      const result = await productsCollections.find(query).toArray();
-      res.send(result);
+    // delete products ///
+    app.delete("/deleteproducts/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const emailQuery = { email: req.query.email };
+      const seller = await usersCollections.findOne(emailQuery);
+      if (seller.role === "seller") {
+        const result = await productsCollections.deleteOne(filter);
+        res.send(result);
+      }
     });
 
     app.post("/bookings", async (req, res) => {
