@@ -78,21 +78,57 @@ async function run() {
       const result = await usersCollections.insertOne(user);
       res.send(result);
     });
-// post category by admin ///
+    // post category by admin ///
     app.post("/category", async (req, res) => {
       const category = req.body;
-      const email = req.query.email
+      const email = req.query.email;
       // console.log(email);
-      const admin = await usersCollections.findOne({email:email})
+      const admin = await usersCollections.findOne({ email: email });
       console.log(admin);
 
-      if(admin.role === 'Admin'){
+      if (admin.role === "Admin") {
         const result = await categoriesCollections.insertOne(category);
         res.send(result);
       }
       // console.log(category);
     });
     // get categories
+
+    // get seller and buyer  for admin //
+    app.get("/allseller", async (req, res) => {
+      const isAdmin = await usersCollections.findOne({email:req.query.email})
+      // console.log(isAdmin);
+      const sellerType = req.query.type
+      if(sellerType==='seller'){
+        const seller = await usersCollections.find({role:"seller"}).toArray();
+        console.log(req.query.type,'is his type');
+          res.send(seller);
+        }
+        if(sellerType==='buyer'){
+          const buyer = await usersCollections.find({role:"buyer"}).toArray()
+          res.send(buyer)
+        }
+
+    });
+// delate a use ///
+app.delete('/deleteUser',async(req,res)=>{
+const userId = req.body._id;
+const type = req.query.type
+console.log(type);
+if(type==='buyer'){
+  const buyer = await usersCollections.deleteOne({_id:ObjectId(userId)})
+   res.send(buyer)
+   console.log(buyer);
+}
+if(type==='seller'){
+
+  const seller = await usersCollections.deleteOne({_id : ObjectId(userId)})
+  res.send(seller)
+}
+
+
+})
+    
 
     app.get("/usersTypes/:email", async (req, res) => {
       const email = req.params.email;
