@@ -96,39 +96,67 @@ async function run() {
 
     // get seller and buyer  for admin //
     app.get("/allseller", async (req, res) => {
-      const isAdmin = await usersCollections.findOne({email:req.query.email})
+      const isAdmin = await usersCollections.findOne({
+        email: req.query.email,
+      });
       // console.log(isAdmin);
-      const sellerType = req.query.type
-      if(sellerType==='seller'){
-        const seller = await usersCollections.find({role:"seller"}).toArray();
-        console.log(req.query.type,'is his type');
-          res.send(seller);
-        }
-        if(sellerType==='buyer'){
-          const buyer = await usersCollections.find({role:"buyer"}).toArray()
-          res.send(buyer)
-        }
+      const sellerType = req.query.type;
 
+      if (sellerType === "seller") {
+        const seller = await usersCollections
+          .find({ role: "seller" })
+          .toArray();
+        // console.log(req.query.type,'is his type');
+        res.send(seller);
+      }
+      if (sellerType === "buyer") {
+        const buyer = await usersCollections.find({ role: "buyer" }).toArray();
+        res.send(buyer);
+      }
     });
-// delate a use ///
-app.delete('/deleteUser',async(req,res)=>{
-const userId = req.body._id;
-const type = req.query.type
-console.log(type);
-if(type==='buyer'){
-  const buyer = await usersCollections.deleteOne({_id:ObjectId(userId)})
-   res.send(buyer)
-   console.log(buyer);
-}
-if(type==='seller'){
+    // delate a use ///
+    app.delete("/deleteUser", async (req, res) => {
+      const userId = req.body._id;
+      const type = req.query.type;
+      console.log(type);
+      if (type === "buyer") {
+        const buyer = await usersCollections.deleteOne({
+          _id: ObjectId(userId),
+        });
+        res.send(buyer);
+        console.log(buyer);
+      }
+      if (type === "seller") {
+        const seller = await usersCollections.deleteOne({
+          _id: ObjectId(userId),
+        });
+        res.send(seller);
+      }
+    });
 
-  const seller = await usersCollections.deleteOne({_id : ObjectId(userId)})
-  res.send(seller)
-}
+    // verify seller //
+    app.put("/verify", async (req, res) => {
+      const id = req.body._id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: "verified",
+        },
+      };
 
+      const isAdmin = await usersCollections.findOne({
+        email: req.query.email,
+      });
+      const adminrole = isAdmin.role;
 
-})
-    
+      if (adminrole === "Admin") {
+        console.log(adminrole);
+        console.log(filter);
+        const result = await usersCollections.updateOne(filter,updateDoc,options)
+          res.send(result);
+      }
+    })
 
     app.get("/usersTypes/:email", async (req, res) => {
       const email = req.params.email;
