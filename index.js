@@ -101,7 +101,18 @@ async function run() {
     // get categories
 
     // get seller and buyer  for admin //
-    app.get("/allseller", async (req, res) => {
+    app.get("/allseller", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+
+      console.log(email);
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ message: "Forbidden Access from verifyJWT" });
+      }
+
       const isAdmin = await usersCollections.findOne({
         email: req.query.email,
       });
@@ -329,8 +340,8 @@ async function run() {
     app.post("/addAdvertisement", async (req, res) => {
       const product = req.body;
       console.log(product);
-      const result = await advertiseCollections.insertOne(product);
-      res.send(result);
+      const inserPro = await advertiseCollections.insertOne({ product });
+      res.send(inserPro);
     });
 
     app.get("/advertise", verifyJWT, async (req, res) => {
