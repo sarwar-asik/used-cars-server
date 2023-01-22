@@ -173,7 +173,7 @@ async function run() {
     app.get("/usersTypes/:email", async (req, res) => {
       const email = req.params.email;
       // console.log(email);
-      const user = await usersCollections.findOne({ email:email });
+      const user = await usersCollections.findOne({ email: email });
       console.log(user);
       const userType = user?.role;
       console.log(userType);
@@ -232,16 +232,38 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/orders/:email", verifyJWT, async (req, res) => {
+    app.delete("/deleteorder/:email", async (req, res) => {
+      const booked = req.body;
       const email = req.params.email;
-      const decodedEmail = req.decoded.email;
-      if (email !== decodedEmail) {
-        return res
-          .status(403)
-          .send({ message: "Forbidden Access from verifyJWT",message2:"You are not buyer or seller" });
-      }
+      console.log(email);
+      const query = { _id: ObjectId(booked._id), email: email };
+      console.log(query);
+      // const ordered = await bookingsCollections.find(query).toArray();
+      // console.log(ordered);
+      const result = await bookingsCollections.deleteOne(query);
+      console.log(result);
+      res.send(result);
+    });
+
+    app.get("/allorder",async(req,res)=>{
+      const ordered =await bookingsCollections.find({}).toArray()
+      res.send(ordered)
+    })
+    app.get("/orders/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      // const decodedEmail = req.decoded.email;
+      // if (email !== decodedEmail) {
+      //   return res
+      //     .status(403)
+      //     .send({
+      //       message: "Forbidden Access from verifyJWT",
+      //       message2: "You are not buyer or seller",
+      //     });
+      // }
       const query = { email: email };
       const orders = await bookingsCollections.find(query).toArray();
+      // console.log(orders);
       res.send(orders);
     });
 
@@ -353,11 +375,10 @@ async function run() {
       res.send(advertiseAll);
     });
 
-
-    app.get('/allProduct', async(req,res)=>{
-      const products = await productsCollections.find({}).toArray()
-      res.send(products)
-    })
+    app.get("/allProduct", async (req, res) => {
+      const products = await productsCollections.find({}).toArray();
+      res.send(products);
+    });
   } finally {
   }
 }
