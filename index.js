@@ -172,9 +172,11 @@ async function run() {
 
     app.get("/usersTypes/:email", async (req, res) => {
       const email = req.params.email;
-      const user = await usersCollections.findOne({ email });
+      // console.log(email);
+      const user = await usersCollections.findOne({ email:email });
+      console.log(user);
       const userType = user?.role;
-      // console.log(userType);
+      console.log(userType);
       res.send({ userType });
     });
 
@@ -236,7 +238,7 @@ async function run() {
       if (email !== decodedEmail) {
         return res
           .status(403)
-          .send({ message: "Forbidden Access from verifyJWT" });
+          .send({ message: "Forbidden Access from verifyJWT",message2:"You are not buyer or seller" });
       }
       const query = { email: email };
       const orders = await bookingsCollections.find(query).toArray();
@@ -335,21 +337,27 @@ async function run() {
       res.send(inserPro);
     });
 
-    app.get("/advertise", verifyJWT, async (req, res) => {
+    app.get("/advertise", async (req, res) => {
       const email = req.query.email;
 
       // console.log(email, "email ...");
-      const decodedEmail = req.decoded.email;
-      if (email !== decodedEmail) {
-        return res
-          .status(403)
-          .send({ message: "Forbidden Access from verifyJWT" });
-      }
+      // const decodedEmail = req.decoded.email;
+      // if (email !== decodedEmail) {
+      //   return res
+      //     .status(403)
+      //     .send({ message: "Forbidden Access from verifyJWT" });
+      // }
 
       const advertiseAll = await advertiseCollections.find({}).toArray();
 
       res.send(advertiseAll);
     });
+
+
+    app.get('/allProduct', async(req,res)=>{
+      const products = await productsCollections.find({}).toArray()
+      res.send(products)
+    })
   } finally {
   }
 }
