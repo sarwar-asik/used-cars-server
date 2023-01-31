@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIP_SECRET);
@@ -13,8 +14,10 @@ app.use(express.json());
 app.get("/", async (req, res) => {
   res.send("my server running from loacalhost 3008");
 });
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ysfeeva.mongodb.net/?retryWrites=true&w=majority`;
+
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ysfeeva.mongodb.net/?retryWrites=true&w=majority`;
+
+const uri = "mongodb://localhost:27017";
 
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -245,10 +248,10 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/allorder",async(req,res)=>{
-      const ordered =await bookingsCollections.find({}).toArray()
-      res.send(ordered)
-    })
+    app.get("/allorder", async (req, res) => {
+      const ordered = await bookingsCollections.find({}).toArray();
+      res.send(ordered);
+    });
     app.get("/orders/:email", async (req, res) => {
       const email = req.params.email;
       console.log(email);
@@ -379,6 +382,93 @@ async function run() {
       const products = await productsCollections.find({}).toArray();
       res.send(products);
     });
+
+    // for khulna project  Bright Future///
+
+    const balanceCollections = client.db("brightFuture").collection("balance");
+    const depositCollections = client.db("brightFuture").collection("deposit");
+    const withdrawCollections = client
+      .db("brightFuture")
+      .collection("withdraw");
+
+    app.put("/deposit", async (req, res) => {
+      const data = req.body;
+      const usermail = data.user;
+      const filter = { user: usermail };
+      const options = { upsert: true };
+      const getUser = await balanceCollections.findOne({ user: usermail });
+      const oldamount = parseInt(
+        getUser?.amount === "null" ? "0" : getUser?.amount
+      );
+
+      const newamount = oldamount + parseInt(data?.amount);
+
+      console.log(newamount);
+
+      const updateUser = {
+        $set: {
+          method: data.method,
+          number: data.number,
+          user: data.user,
+          amount: JSON.stringify(newamount),
+          from: data.from,
+          transitionID: data.transitionID,
+        },
+      };
+      // update balance
+      const resultbalance = await balanceCollections.updateOne(
+        filter,
+        updateUser,
+        options
+      );
+      // added in depositCollections
+      const resultdeposit = await depositCollections.insertOne(data);
+      res.send(resultbalance);
+    });
+
+    app.put("/withdraw", async (req, res) => {
+      const data = req.body;
+      const usermail = data.user;
+      const filter = { user: usermail };
+      const options = { upsert: true };
+      const getUser = await balanceCollections.findOne({ user: usermail });
+      const oldamount = parseInt(
+        getUser?.amount === "null" ? "0" : getUser?.amount
+      );
+
+      const newamount = oldamount - parseInt(data.amount);
+
+
+      const updateUser = {
+        $set: {
+          amount: JSON.stringify(newamount),
+        },
+      };
+      if(oldamount>0){
+        const addDeposit = await withdrawCollections.insertOne(data);
+        // console.log(updateUser);
+        const result = await balanceCollections.updateOne(
+          filter,
+          updateUser,
+          options
+        );
+        res.send(result);
+      }
+      
+    });
+
+    app.get("/haveDeposit", async (req, res) => {
+      const query = {};
+      // console.log(query, "...");
+      const deposit = await balanceCollections.find({}).toArray();
+      console.log(deposit, "...");
+      res.send(deposit);
+    });
+    // app.post("/deposit",async(req,res)=>{
+    //   const data =req.body;
+    // })
+
+    
   } finally {
   }
 }
